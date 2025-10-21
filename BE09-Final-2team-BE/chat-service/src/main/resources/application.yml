@@ -1,0 +1,47 @@
+server:
+  port: 0
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: chat-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+  data:
+    mongodb:
+      uri: ${MONGODB}
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${DEFAULT_ZONE}
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+      user-service:
+        url: http://gateway-service:8000/api/v1/user-service
+
+logging:
+  level:
+    com.momnect.chatservice: INFO
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+    com.momnect.chatservice.command.client: DEBUG

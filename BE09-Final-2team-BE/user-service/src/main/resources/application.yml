@@ -1,0 +1,52 @@
+server:
+  port: 0
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: user-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+  feign:
+    client:
+      config:
+        default:
+          connectTimeout: 5000
+          readTimeout: 5000
+      product-service:
+        url: lb://PRODUCT-SERVICE
+      review-service:
+        url: lb://REVIEW-SERVICE
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${DEFAULT_ZONE}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 604800000        # access 토큰 만료
+  refresh-expiration: 604800000 # refresh 토큰 만료
+
+ftp:
+  file-server-url: ${FTP_SERVER_URL}
+
+springdoc:
+  packages-to-scan: com.momnect.userservice
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
