@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from "@/components/common/Sidebar";
 import ConfirmModal, { MODAL_TYPES } from "@/components/common/ConfirmModal";
 import { validatePasswordStrength, validatePasswordMatch, PASSWORD_CONFIG } from '@/app/(user)/components/passwordUtils';
+import { userAPI } from '@/lib/api';
 import './password-change.css';
 
 const PasswordChange = () => {
@@ -17,7 +18,6 @@ const PasswordChange = () => {
     });
 
     const [validationStates, setValidationStates] = useState({
-        currentPassword: { status: 'default', message: '', checked: false },
         newPassword: { status: 'default', message: '' },
         confirmPassword: { status: 'default', message: '' }
     });
@@ -26,19 +26,6 @@ const PasswordChange = () => {
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
     const [isPasswordChanged, setIsPasswordChanged] = useState(false); // 추가
 
-    // 현재 비밀번호 확인 (API 호출 시뮬레이션)
-    const verifyCurrentPassword = async (password) => {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                // 실제로는 API 호출로 현재 비밀번호 확인
-                const isCorrect = password === 'correct123'; // 임시 비밀번호
-                resolve({
-                    isValid: isCorrect,
-                    message: isCorrect ? '현재 비밀번호가 확인되었습니다' : '현재 비밀번호가 일치하지 않습니다'
-                });
-            }, 1000);
-        });
-    };
 
     // 비밀번호 유효성 검사 (유틸리티 사용)
     // 비밀번호 확인 검사 (유틸리티 사용)
@@ -46,14 +33,6 @@ const PasswordChange = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-
-        // 현재 비밀번호 입력 시 확인 상태 초기화
-        if (name === 'currentPassword' && validationStates.currentPassword.checked) {
-            setValidationStates(prev => ({
-                ...prev,
-                currentPassword: { status: 'default', message: '', checked: false }
-            }));
-        }
 
         // 실시간 검증
         if (name === 'newPassword') {
@@ -91,53 +70,30 @@ const PasswordChange = () => {
         }
     };
 
-    // 현재 비밀번호 확인
-    const handleCurrentPasswordVerify = async () => {
-        if (!formData.currentPassword.trim()) {
-            setValidationStates(prev => ({
-                ...prev,
-                currentPassword: { status: 'error', message: '현재 비밀번호를 입력해주세요', checked: false }
-            }));
-            return;
-        }
-
-        setValidationStates(prev => ({
-            ...prev,
-            currentPassword: { status: 'loading', message: '🔄 확인 중...', checked: false }
-        }));
-
-        try {
-            const result = await verifyCurrentPassword(formData.currentPassword);
-            setValidationStates(prev => ({
-                ...prev,
-                currentPassword: {
-                    status: result.isValid ? 'success' : 'error',
-                    message: result.isValid ? '✅ ' + result.message : '❌ ' + result.message,
-                    checked: result.isValid
-                }
-            }));
-        } catch (error) {
-            setValidationStates(prev => ({
-                ...prev,
-                currentPassword: { status: 'error', message: '❌ 확인 중 오류가 발생했습니다', checked: false }
-            }));
-        }
-    };
-
     // 비밀번호 변경 실행
     const handlePasswordChange = async () => {
         setIsLoading(true);
 
-        // 실제로는 API 호출
-        setTimeout(() => {
-            console.log('비밀번호 변경 완료:', {
+        try {
+            // api.js의 changePassword 사용
+            await userAPI.changePassword({
                 currentPassword: formData.currentPassword,
-                newPassword: formData.newPassword
+                newPassword: formData.newPassword,
+                newPasswordConfirm: formData.confirmPassword
             });
-            setIsLoading(false);
-            setIsPasswordChanged(true); // 변경 완료 상태 설정
+
+            setIsPasswordChanged(true);
             setIsCompleteModalOpen(true);
-        }, 1000);
+        } catch (error) {
+            // 현재 비밀번호 틀림 에러 처리
+            if (error.response?.data?.message?.includes('현재 비밀번호')) {
+                alert('현재 비밀번호가 일치하지 않습니다.');
+            } else {
+                alert('비밀번호 변경에 실패했습니다.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleCompleteModalClose = () => {
@@ -147,8 +103,7 @@ const PasswordChange = () => {
 
     // 변경 버튼 활성화 조건
     const isChangeEnabled =
-        !isPasswordChanged && // 이미 변경되었으면 비활성화
-        validationStates.currentPassword.checked &&
+        formData.currentPassword.trim() !== '' &&
         validationStates.newPassword.status === 'success' &&
         validationStates.confirmPassword.status === 'success' &&
         !isLoading;
@@ -171,27 +126,11 @@ const PasswordChange = () => {
                                     name="currentPassword"
                                     value={formData.currentPassword}
                                     onChange={handleInputChange}
-                                    className={`password-input ${validationStates.currentPassword.status === 'error' ? 'error' : ''}`}
+                                    className="password-input"
                                     placeholder="현재 비밀번호를 입력하세요"
                                 />
-                                <button
-                                    type="button"
-                                    className="verify-btn"
-                                    onClick={handleCurrentPasswordVerify}
-                                    disabled={isLoading || validationStates.currentPassword.checked}
-                                >
-                                    {validationStates.currentPassword.status === 'loading' ? '확인중...' :
-                                        validationStates.currentPassword.checked ? '✓ 확인됨' : '확인'}
-                                </button>
                             </div>
-                            {validationStates.currentPassword.message && (
-                                <div className={`message ${validationStates.currentPassword.status === 'success' ? 'success' : 'error'}`}>
-                                    {validationStates.currentPassword.message}
-                                </div>
-                            )}
                         </div>
-
-                        {/* 안내 메시지 제거 */}
 
                         {/* 새 비밀번호 */}
                         <div className="input-field">

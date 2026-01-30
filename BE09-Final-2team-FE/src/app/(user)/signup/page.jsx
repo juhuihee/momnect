@@ -315,7 +315,7 @@ export default function Signup() {
                 password: formData.password,
                 name: formData.name,
                 email: formData.email,
-                phone: cleanPhone,
+                phoneNumber: cleanPhone,
                 nickname: formData.nickname || null, // 빈 값이면 null
                 address: formData.address,
                 agreements
