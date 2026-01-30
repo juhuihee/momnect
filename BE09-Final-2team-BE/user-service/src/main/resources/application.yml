@@ -14,9 +14,9 @@ spring:
         format_sql: true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASS}
+    url: jdbc:mysql://localhost:3306/momnect
+    username: root
+    password: mysql1
 
   feign:
     client:
@@ -36,15 +36,15 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${DEFAULT_ZONE}
+      defaultZone: http://localhost:8761/eureka
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: testlocaljwtsecretkeyfordevelopmentonlyminimum32characters
   expiration: 604800000        # access 토큰 만료
   refresh-expiration: 604800000 # refresh 토큰 만료
 
 ftp:
-  file-server-url: ${FTP_SERVER_URL}
+  file-server-url: ""
 
 springdoc:
   packages-to-scan: com.momnect.userservice

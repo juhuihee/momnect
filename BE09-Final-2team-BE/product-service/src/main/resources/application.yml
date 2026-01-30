@@ -12,15 +12,16 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
 
-  elasticsearch:
-    uris: ${ELASTICSEARCH}
+#  elasticsearch:
+#    uris: ${ELASTICSEARCH}
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASS}
+    url: jdbc:mysql://localhost:3306/momnect
+    username: root
+    password: mysql1
 
 eureka:
   instance:
@@ -29,10 +30,10 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${DEFAULT_ZONE}
+      defaultZone: http://localhost:8761/eureka
 
 ftp:
-  base-url: ${FTP_SERVER_URL}
+  base-url: ""
 
 springdoc:
   packages-to-scan: com.momnect.productservice
