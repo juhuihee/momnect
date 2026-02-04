@@ -98,8 +98,11 @@ export default function UserProfilePage({ params }) {
     }, [actualUserId]); // actualUserId를 의존성으로 변경
 
     const renderProfileSection = () => {
-        // 안전한 데이터 접근
         const profileInfo = profileData?.profileInfo;
+        const imageUrl = getProfileImageUrl(
+            profileInfo?.profileImageUrl,
+            actualUserId
+        );
         const transactionSummary = profileData?.transactionSummary;
 
         console.log("프로필 섹션 렌더링:");
@@ -117,7 +120,7 @@ export default function UserProfilePage({ params }) {
                     <h3 className="card-title">프로필 정보</h3>
                     <div className="profile-content">
                         <div className="profile-avatar" style={{
-                            backgroundImage: `url(${getProfileImageUrl(profileInfo?.profileImageUrl, profileInfo?.id)})`}}
+                            backgroundImage: `url(${imageUrl})`}}
                         />
                         <h2 className="profile-name">{profileInfo?.nickname || '알 수 없는 사용자'}</h2>
                         <div className="rating">
@@ -240,7 +243,6 @@ export default function UserProfilePage({ params }) {
         );
     }
 
-    console.log("정상 렌더링 시작");
     // 데이터가 성공적으로 로드된 후 렌더링
     return (
         <div className="other-user-profile-container">
