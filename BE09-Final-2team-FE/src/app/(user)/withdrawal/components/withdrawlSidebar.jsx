@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import React, { useState } from "react";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { useSidebar } from "@/hooks/useSidebar";
+import { useSidebar } from "@/hooks/useSidebar"
+import { userAPI } from "@/lib/api";
+import { useUserStore } from "@/store/userStore";
 
 const checkboxStyles = `
   .withdrawal-checkbox:checked {
@@ -27,21 +29,28 @@ const checkboxStyles = `
 export default function WithdrawlSidebar(props) {
   const [agree1, setAgree1] = useState(false);
   const [agree2, setAgree2] = useState(false);
+  const [password, setPassword] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // useSidebar 훅 사용
   const { close, closeAll } = useSidebar("withdrawal");
+  const logout = useUserStore((state) => state.logout);
 
-  // 체크박스 상태 초기화 함수
-  const resetCheckboxes = () => {
+  // 체크박스 상태 + 비밀번호 입력 초기화 함수
+  const resetAll = () => {
     setAgree1(false);
     setAgree2(false);
+    setPassword("");
+    setErrorMsg("");
   };
 
-  // 두 체크박스가 모두 체크되었는지 확인
-  const isAllChecked = agree1 && agree2;
+  // 세 조건 모두 충족해야 버튼 활성화
+  const isAllChecked = agree1 && agree2 && password.trim() !== "";
 
   const handleWithdrawal = () => {
+    setErrorMsg("");
     setShowModal(true);
   };
 
@@ -49,20 +58,28 @@ export default function WithdrawlSidebar(props) {
     setShowModal(false);
   };
 
-  // 뒤로가기 버튼 클릭 시 체크박스 초기화
-  const handleBackClick = () => {
-    resetCheckboxes();
-    close();
-  };
+  const handleConfirmWithdrawal = async () => {
+    setIsLoading(true);
+    try {
+      await userAPI.deleteAccount({
+        password: password,
+        isWithdrawalAgreed: true,
+      });
 
-  const handleConfirmWithdrawal = () => {
-    // 실제 탈퇴 로직 구현
-    console.log("회원 탈퇴 처리");
-    setShowModal(false);
-    alert("회원탈퇴 완료");
-    // 사이드바 닫기
-    closeAll();
-    handleBackClick();
+      setShowModal(false);
+      resetAll();
+      closeAll();
+
+      await logout();
+      // logout()에 이미 router.push("/") 있어서 별도 redirect 불필요
+
+    } catch (error) {
+      setShowModal(false);
+      const message = error.response?.data?.message || "탈퇴 처리 중 오류가 발생했습니다.";
+      setErrorMsg(message); // alert 대신 인라인 에러 표시
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -73,15 +90,15 @@ export default function WithdrawlSidebar(props) {
         trigger={props.trigger}
         title={"회원 탈퇴"}
         onBack
-        onCloseCallback={resetCheckboxes}
+        onCloseCallback={resetAll}
         footerBorder={false}
         footer={
-          <div className="flex justify-center gap-9">
+          <div className="flex gap-3 w-full px-4 pb-4">
             <Button
               variant={"outline"}
-              className="text-gray-600"
+              className="flex-1 h-12 text-gray-600"
               onClick={() => {
-                resetCheckboxes();
+                resetAll();
                 close();
                 closeAll();
               }}
@@ -89,10 +106,10 @@ export default function WithdrawlSidebar(props) {
               다시 생각해 볼께요
             </Button>
             <Button
-              className={`bg-red-600 hover:bg-red-700 text-white ${
+              className={`flex-1 h-12 bg-red-600 hover:bg-red-700 text-white ${
                 !isAllChecked ? "opacity-50 cursor-not-allowed" : ""
               }`}
-              disabled={!isAllChecked}
+              disabled={!isAllChecked || isLoading}
               onClick={handleWithdrawal}
             >
               회원탈퇴
@@ -163,7 +180,9 @@ export default function WithdrawlSidebar(props) {
                   </tr>
                 </tbody>
               </table>
-              <div className="mt-6">
+
+
+              <div className="mt-4">
                 <div className="flex items-start gap-2">
                   <div className="relative">
                     <input
@@ -193,6 +212,26 @@ export default function WithdrawlSidebar(props) {
                   </label>
                 </div>
               </div>
+
+              {/* 비밀번호 입력 필드 */}
+              <div className="mt-6">
+                <p className="text-sm font-medium text-gray-700 mb-2">비밀번호 확인</p>
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrorMsg("");
+                    }}
+                    placeholder="현재 비밀번호를 입력해주세요"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                />
+                {/* 에러 메시지 인라인 표시 */}
+                {errorMsg && (
+                    <p className="mt-1 text-xs text-red-600">{errorMsg}</p>
+                )}
+              </div>
+
             </div>
           </div>
         </div>
