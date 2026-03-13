@@ -99,6 +99,22 @@ const PasswordChange = () => {
     const handleCompleteModalClose = () => {
         setIsCompleteModalOpen(false);
         // 필요시 페이지 이동 또는 폼 초기화
+
+        // 폼 초기화
+        setFormData({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+
+        // 검증 상태 초기화
+        setValidationStates({
+            newPassword: { status: 'default', message: '' },
+            confirmPassword: { status: 'default', message: '' }
+        });
+
+        // 완료 상태 초기화
+        setIsPasswordChanged(false);
     };
 
     // 변경 버튼 활성화 조건
